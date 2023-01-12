@@ -1,6 +1,6 @@
 ---
 - name: Install MicroK8s on Ubuntu
-  hosts: all
+  hosts: localhost
   become: true
   tasks:
   - name: Update system
