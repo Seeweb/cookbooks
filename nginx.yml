@@ -1,10 +1,11 @@
 ---
+
 - name: Install nginx demo
-  host: localhost
+  hosts: localhost
   become: true
 
   tasks:
   - name: Install nginx
     apt:
-    name: nginx
-    state: present
+      name: nginx
+      state: present
