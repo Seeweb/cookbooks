@@ -1,6 +1,6 @@
 ---
 - name: Install K3s
-  hosts: all
+  hosts: localhost
   become: yes 
 
   tasks:
