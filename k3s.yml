@@ -1,6 +1,7 @@
 ---
 - name: Install K3s
-  hosts: localhost
+  #hosts: localhost
+  hosts: gpu
   become: yes 
 
   tasks:
@@ -9,10 +10,15 @@
       args:
         creates: /usr/local/bin/k3s 
 
-    - name: Retrieve K3s cluster token
-      shell: cat /var/lib/rancher/k3s/server/node-token
-      register: k3s_token
+    - name: Create root's .bashrc file
+      become: yes
+      file:
+        path: /root/.bashrc
+        state: touch
 
-    - name: Display K3s cluster token
-      debug:
-        var: k3s_token.stdout_lines
+    - name: Export confing in .bashrc
+      blockinfile:
+        path: /root/.bashrc
+        block: |-
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          alias k=kubectl
