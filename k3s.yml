@@ -1,7 +1,6 @@
 ---
 - name: Install K3s
-  #hosts: localhost
-  hosts: gpu
+  hosts: localhost
   become: yes 
 
   tasks:
