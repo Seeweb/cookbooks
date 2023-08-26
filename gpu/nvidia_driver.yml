@@ -1,7 +1,6 @@
 ---
 - name: Install NVIDIA drivers
   hosts: localhost
-  #hosts: gpu
   become: true
 
   vars:
@@ -22,24 +21,15 @@
 
     - name: "Install Nvidia driver version {{ nvidia_version }}"
       ansible.builtin.apt:
-        name: nvidia-driver-{{ nvidia_version }}
+        name: "nvidia-driver-{{ nvidia_version }}"
         state: present
 
     - name: "Install Linux image {{ kernel_version }}"
       ansible.builtin.apt:
-        name: {{ kernel_version }}
+        name: "{{ kernel_version }}"
         state: present
 
     - name: "Install Linux headers {{ headers_version }}"
       ansible.builtin.apt:
-        name: {{ headers_version }}
+        name: "{{ headers_version }}"
         state: present
-
-    
-#    - name: Reboot the system
-#      ansible.builtin.reboot:
-#        reboot_timeout: 300
-#        test_command: uptime
-#        connect_timeout: 10
-#        msg: "Reboot initiated by Ansible"
-#      become: true
