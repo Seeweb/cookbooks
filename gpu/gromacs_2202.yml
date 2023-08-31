@@ -1,0 +1,24 @@
+---
+- hosts: localhost
+  become: true
+
+  tasks:
+    - name: Download container gromacs :latest
+      docker_container:
+        name: gromacs
+        state: started
+        image: "gromacs/gromacs"
+        pull: true
+
+    - name: Create root's .bashrc file
+      become: yes
+      file:
+        path: /root/.bashrc
+        state: touch
+
+    - name: Export confing in .bashrc
+      blockinfile:
+        path: /root/.bashrc
+        block: |-
+          alias gmx='docker run gromacs/gromacs gmx'
+
