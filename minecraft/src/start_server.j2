@@ -1,0 +1,5 @@
+#!/bin/bash
+#Proudly built by Francesco Cirelli in Seeweb
+{% set maxMemory = ((ansible_memtotal_mb/2176)|round(0))|int %}
+
+java -Xmx{{ maxMemory }}G -jar /root/server.jar --nogui
