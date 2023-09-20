@@ -1,5 +1,9 @@
 ---
-- name: Install Nginx
+- name: Install Nginx 
+  hosts: localhost
+  become: true
+  
+- name: Update apt and install Nginx
   apt:
     name: nginx
     state: latest
