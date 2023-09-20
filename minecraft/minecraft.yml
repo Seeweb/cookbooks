@@ -1,4 +1,3 @@
-
 ---
 - name: Install Mincraft Server
   hosts: localhost
