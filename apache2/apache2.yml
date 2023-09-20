@@ -1,0 +1,10 @@
+---
+- name: Install Apache2 
+  hosts: localhost
+  become: true
+  
+- name: Update apt and install Apache2
+  apt:
+    name: apache2
+    state: latest
+    update_cache: true
