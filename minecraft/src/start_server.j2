@@ -1,5 +1,6 @@
+{% set maxMemory = ((ansible_memtotal_mb/1024*0.75)|round(0))|int %}
 #!/bin/bash
 #Proudly built by Francesco Cirelli at Seeweb
-{% set maxMemory = ((ansible_memtotal_mb/1024*0.75))|round(0))|int %}
 
+cd /root/
 java -Xmx{{ maxMemory }}G -jar /root/server.jar --nogui
