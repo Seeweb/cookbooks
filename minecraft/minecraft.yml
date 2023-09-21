@@ -8,13 +8,13 @@
   tasks:
     - name: Update apt and install Java  
       apt:
-        name: openjdk-8-jre
+        name: openjdk-17-jre
         state: latest
         update_cache: true
        
     - name: Download latest Mincraft Server .jar 
       ansible.builtin.get_url:
-        url: {{ serverDownloadUrl }}
+        url: "{{ serverDownloadUrl }}"
         dest: /root/server.jar
     
     - name: Copy starter script to /usr/local/bin/ 
@@ -33,7 +33,7 @@
       ansible.builtin.command: bash /usr/local/bin/start_server.sh
     
     - name: Accepting EULA
-      ansible.builtin.command: sed 's/eula=false/eula=true/' /root/eula.txt
+      ansible.builtin.command: sed -i 's/eula=false/eula=true/' /root/eula.txt
     
-    - name: Start again the Server
-      ansible.builtin.command: bash /usr/local/bin/start_server.sh
+    #- name: Start again the Server
+    #  ansible.builtin.command: bash /usr/local/bin/start_server.sh
