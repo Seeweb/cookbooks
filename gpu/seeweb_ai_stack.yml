@@ -100,10 +100,6 @@
         virtualenv: /home/{{ ai_user }}/venv/
         virtualenv_site_packages: yes
 
-    - name: Install pyTorch
-      ansible.builtin.pip:
-        virtualenv: /home/{{ ai_user }}/venv/
-
     - name: Install python requirements
       ansible.builtin.pip:
         virtualenv: /home/{{ ai_user }}/venv/
