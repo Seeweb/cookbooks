@@ -1,0 +1,109 @@
+---
+- name: Install Seeweb AI Stack
+  hosts: localhost
+  become: true
+
+  vars:
+    ai_user: "ecuser"
+
+  tasks:
+
+    - name: Install required system packages
+      apt:
+        pkg:
+          - nvidia-container-toolkit
+          - nvidia-container-runtime
+          - python3-venv
+          - python3-pip
+        state: latest
+        update_cache: true
+
+    - name: Download Miniconda
+      get_url:
+        url: https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+        dest: /tmp/install-miniconda.sh
+        mode: 0550
+
+    - name: Create conda folder
+      become: True
+      file:
+        path: /opt/miniconda3
+        state: directory
+        owner: root
+        mode: 755
+        recurse: yes
+
+    - name: Run the installer
+      shell: /tmp/install-miniconda.sh -b -u -p /opt/miniconda3
+
+    - name: Remove the installer
+      file:
+        state: absent
+        path: /tmp/install-miniconda.sh
+
+    - name: Add miniconda bin to path
+      become: True
+      shell: echo 'export PATH=/opt/miniconda3/bin:$PATH' >> /etc/profile
+
+    - name: conda - read permission for all
+      become: True
+      file:
+        path: /opt/miniconda3
+        mode: +r
+        recurse: yes
+
+    - name: conda - execution permission for all
+      become: True
+      file:
+        path: /opt/miniconda3/bin
+        mode: +x
+        recurse: yes
+
+    - name: venv directory for user {{ ai_user }}
+      file:
+        path: /home/{{ ai_user }}/venv/
+        owner: "{{ ai_user }}"
+        state: directory
+
+    - name: Manually create the initial virtualenv for user {{ ai_user }}
+      become_user: "{{ ai_user }}"
+      shell: "python3 -m venv /home/{{ ai_user }}/venv/"
+
+    - name: Create {{ ai_user }} .bashrc file
+      become: yes
+      file:
+        path: /home/{{ ai_user }}/.bashrc
+        state: touch
+
+    - name: Export confing in .bashrc for user {{ ai_user }}
+      blockinfile:
+        path: /home/{{ ai_user }}/.bashrc
+        block: |-
+          source /home/{{ ai_user }}/venv/bin/activate
+
+    - name: Manually create the initial virtualenv for user {{ai_user}}
+      become_user: "{{ ai_user }}"
+      shell: "/home/{{ ai_user }}/venv/bin/pip install --upgrade pip"
+
+    - name: Install pyTorch
+      ansible.builtin.pip:
+        name: torch
+        virtualenv: /home/{{ ai_user }}/venv/
+        virtualenv_site_packages: yes
+
+    - name: Install pyTorch
+      ansible.builtin.pip:
+        virtualenv: /home/{{ ai_user }}/venv/
+
+    - name: Install python requirements
+      ansible.builtin.pip:
+        virtualenv: /home/{{ ai_user }}/venv/
+        virtualenv_site_packages: yes
+        requirements: /root/.ansible/pull/{{ ansible_fqdn }}/gpu/seeweb_ai_stack_req.txt
+
+    - name: Change ownership of venv files
+      ansible.builtin.file:
+        path: /home/{{ ai_user }}/venv/
+        owner: "{{ ai_user }}"
+        group: "{{ ai_user }}"
+      become: yes
