@@ -2,9 +2,11 @@
 - name: Install Nginx 
   hosts: localhost
   become: true
+
+  tasks:
+  - name: Update apt and install Nginx
+    apt:
+      name: nginx
+      state: latest
+      update_cache: true
   
-- name: Update apt and install Nginx
-  apt:
-    name: nginx
-    state: latest
-    update_cache: true
