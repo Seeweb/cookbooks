@@ -3,11 +3,11 @@
   become: true
 
   tasks:
-    - name: Download container gromacs :latest
+    - name: Download container gromacs
       docker_container:
         name: gromacs
         state: started
-        image: "gromacs/gromacs"
+        image: "gromacs/gromacs:2022.2"
         pull: true
 
     - name: Create root's .bashrc file

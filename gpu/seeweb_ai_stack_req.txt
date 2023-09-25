@@ -1,0 +1,15 @@
+tensorflow
+torch
+keras
+scikit-learn
+numpy
+pandas
+scipy
+matplotlib
+numexpr
+Pillow
+protobuf
+psutil
+transformers
+pipeline
+datasets
