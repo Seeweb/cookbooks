@@ -25,13 +25,18 @@
         name: linux-headers-{{ ansible_kernel }}
         state: present
 
+    - name: Get the last installed kernel header
+      shell: dpkg -l | awk '/^ii/ && /linux-headers-/{print $2}' | sort -r | head -n 1
+      register: last_kernel_header
+      changed_when: false  # Non segnare come "changed" anche se il comando è eseguito
+
     - name: Download CUDA installer
       get_url:
         url: "{{ cuda_url }}"
         dest: /tmp/installer.run
 
     - name: Run CUDA installer
-      command: sh /tmp/installer.run --silent
+      command: sh /tmp/installer.run --silent --kernel-source-path=/usr/src/"{{ last_kernel_header  }}"
       args:
         chdir: /tmp
 
