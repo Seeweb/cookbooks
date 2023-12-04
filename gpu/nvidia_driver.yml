@@ -25,6 +25,16 @@
         name: linux-headers-{{ ansible_kernel }}
         state: present
 
+    - name: Install the latest kernel
+      apt:
+        name: linux-image-generic
+        state: latest
+
+    - name: Install the latest headers
+      apt:
+        name: linux-headers-generic
+        state: latest
+
     - name: Get the last installed kernel header
       shell: dpkg -l | awk '/^ii/ && /linux-headers-/{print $2}' | sort -r | head -n 1
       register: last_kernel_header
