@@ -3,6 +3,9 @@
   hosts: localhost
   become: true
 
+  vars:
+    cuda_url: "https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run"
+
   tasks:
     - name: Update apt package cache
       apt:
@@ -24,11 +27,16 @@
 
     - name: Download CUDA installer
       get_url:
-        url: https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run
-        dest: /tmp/cuda_12.3.1_545.23.08_linux.run
+        url: {{ cuda_url }}
+        dest: /tmp/installer.run
 
     - name: Run CUDA installer
-      command: sh /tmp/cuda_12.3.1_545.23.08_linux.run --silent
+      command: sh /tmp/installer.run --silent
       args:
         chdir: /tmp
+
+    - name: Remove CUDA installer
+      file:
+        path: /tmp/installer.run
+        state: absent
 
