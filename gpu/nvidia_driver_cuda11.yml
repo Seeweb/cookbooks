@@ -4,7 +4,7 @@
   become: true
 
   vars:
-    cuda_url: "https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run"
+    cuda_url: "https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda_11.7.0_515.43.04_linux.run"
 
   tasks:
     - name: Update apt package cache
