@@ -3,33 +3,32 @@
   hosts: localhost
   become: true
 
-  vars:
-    nvidia_version: "535"
-    kernel_version: "linux-image-nvidia-5.19"
-    headers_version: "linux-headers-5.19.0-1014-nvidia"
-
   tasks:
-    - name: Update all packages
+    - name: Update apt package cache
       apt:
         update_cache: yes
-        upgrade: dist
 
-    - name: Remove Nvidia Graphics Drivers PPA
-      ansible.builtin.apt_repository:
-        repo: "ppa:graphics-drivers/ppa"
-        state: absent
+    - name: Install Git, build-essential, libxml2
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - git
+        - build-essential
+        - libxml2
 
-    - name: "Install Nvidia driver version {{ nvidia_version }}"
-      ansible.builtin.apt:
-        name: "nvidia-driver-{{ nvidia_version }}"
+    - name: Install Linux headers
+      apt:
+        name: linux-headers-{{ ansible_kernel }}
         state: present
 
-    - name: "Install Linux image {{ kernel_version }}"
-      ansible.builtin.apt:
-        name: "{{ kernel_version }}"
-        state: present
+    - name: Download CUDA installer
+      get_url:
+        url: https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run
+        dest: /tmp/cuda_12.3.1_545.23.08_linux.run
 
-    - name: "Install Linux headers {{ headers_version }}"
-      ansible.builtin.apt:
-        name: "{{ headers_version }}"
-        state: present
+    - name: Run CUDA installer
+      command: sh /tmp/cuda_12.3.1_545.23.08_linux.run --silent
+      args:
+        chdir: /tmp
+
