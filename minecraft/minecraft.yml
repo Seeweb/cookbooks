@@ -1,0 +1,39 @@
+---
+- name: Install Mincraft Server
+  hosts: localhost
+  become: true
+  vars_files:
+    - vars/default.yml
+     
+  tasks:
+    - name: Update apt and install Java  
+      apt:
+        name: openjdk-17-jre
+        state: latest
+        update_cache: true
+       
+    - name: Download latest Mincraft Server .jar 
+      ansible.builtin.get_url:
+        url: "{{ serverDownloadUrl }}"
+        dest: /root/server.jar
+    
+    - name: Copy starter script to /usr/local/bin/ 
+      template:
+        src: src/start_server.j2
+        dest: /usr/local/bin/start_server.sh
+        mode: '0755'
+    
+    - name: Creates the cronjob "@reboot bash /usr/local/bin/start_server.sh"
+      ansible.builtin.cron:
+        name: "a job for reboot"
+        special_time: reboot
+        job: "bash /usr/local/bin/start_server.sh"
+    
+    - name: Start the Server
+      ansible.builtin.command: bash /usr/local/bin/start_server.sh
+    
+    - name: Accepting EULA
+      ansible.builtin.command: sed -i 's/eula=false/eula=true/' /root/eula.txt
+    
+    #- name: Start again the Server
+    #  ansible.builtin.command: bash /usr/local/bin/start_server.sh
