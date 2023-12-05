@@ -1,10 +1,7 @@
 ---
-- name: Install NVIDIA drivers
+- name: Install NVIDIA drivers - CUDA 12
   hosts: localhost
   become: true
-
-  vars:
-    cuda_url: "https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run"
 
   tasks:
     - name: Update apt package cache
@@ -19,29 +16,35 @@
         - git
         - build-essential
         - libxml2
+    - name: Download CUDA keyring
+      get_url:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb"
+        dest: "/tmp/cuda-keyring_1.1-1_all.deb"
 
-    - name: Install Linux headers
+    - name: Install CUDA keyring
       apt:
-        name: linux-headers-{{ ansible_kernel }}
+        deb: "/tmp/cuda-keyring_1.1-1_all.deb"
+
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install CUDA Toolkit 12.3
+      apt:
+        name: cuda-toolkit-12-3
         state: present
 
-    - name: Get the last installed kernel header
-      shell: dpkg -l | awk '/^ii/ && /linux-headers-/{print $2}' | sort -r | head -n 1
-      register: last_kernel_header
-      changed_when: false  # Non segnare come "changed" anche se il comando è eseguito
+    - name: Install CUDA drivers
+      apt:
+        name: cuda-drivers
+        state: present
 
-    - name: Download CUDA installer
-      get_url:
-        url: "{{ cuda_url }}"
-        dest: /tmp/installer.run
+    - name: Ottieni la lista dei kernel installati
+      shell: "dpkg -l |grep linux-image |cut -d \" \" -f 3|sed -e 's/linux-image/linux-headers/'"
+      register: installed_kernels
 
-    - name: Run CUDA installer
-      command: sh /tmp/installer.run --silent --kernel-source-path=/usr/src/"{{ last_kernel_header  }}"
-      args:
-        chdir: /tmp
-
-    - name: Remove CUDA installer
-      file:
-        path: /tmp/installer.run
-        state: absent
-
+    - name: Installa gli headers del kernel
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ installed_kernels.stdout_lines }}"

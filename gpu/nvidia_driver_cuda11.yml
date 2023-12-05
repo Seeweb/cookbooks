@@ -1,10 +1,7 @@
 ---
-- name: Install NVIDIA drivers
+- name: Install NVIDIA drivers - CUDA 11
   hosts: localhost
   become: true
-
-  vars:
-    cuda_url: "https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda_11.7.0_515.43.04_linux.run"
 
   tasks:
     - name: Update apt package cache
@@ -20,23 +17,37 @@
         - build-essential
         - libxml2
 
-    - name: Install Linux headers
-      apt:
-        name: linux-headers-{{ ansible_kernel }}
+    - name: Scarica il file CUDA pin
+      get_url:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin"
+        dest: "/etc/apt/preferences.d/cuda-repository-pin-600"
+
+    - name: Aggiungi la chiave GPG di NVIDIA
+      apt_key:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub"
         state: present
 
-    - name: Download CUDA installer
-      get_url:
-        url: "{{ cuda_url }}"
-        dest: /tmp/installer.run
+    - name: Aggiungi il repository CUDA
+      apt_repository:
+        repo: "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
+        state: present
 
-    - name: Run CUDA installer
-      command: sh /tmp/installer.run --silent
-      args:
-        chdir: /tmp
+    - name: Aggiorna la cache del repository
+      apt:
+        update_cache: yes
 
-    - name: Remove CUDA installer
-      file:
-        path: /tmp/installer.run
-        state: absent
+    - name: Installa il pacchetto CUDA
+      apt:
+        name: cuda
+        state: present
+        update_cache: yes
 
+    - name: Ottieni la lista dei kernel installati
+      shell: "dpkg -l |grep linux-image |cut -d \" \" -f 3|sed -e 's/linux-image/linux-headers/'"
+      register: installed_kernels
+
+    - name: Installa gli headers del kernel
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ installed_kernels.stdout_lines }}"
