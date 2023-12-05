@@ -40,11 +40,11 @@
         state: present
 
     - name: Ottieni la lista dei kernel installati
-      command: "dpkg -l | grep linux-image | awk '{print $2}'"
+      shell: "dpkg -l |grep linux-image |cut -d \" \" -f 3|sed -e 's/linux-image/linux-headers/'"
       register: installed_kernels
 
     - name: Installa gli headers del kernel
       apt:
-        name: "linux-headers-{{ item }}"
+        name: "{{ item }}"
         state: present
       loop: "{{ installed_kernels.stdout_lines }}"
