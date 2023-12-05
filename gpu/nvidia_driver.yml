@@ -36,7 +36,7 @@
         state: latest
 
     - name: Get the last installed kernel header
-      shell: dpkg -l | awk '/^ii/ && /linux-headers-/{print $2}' | sort -r | head -n 1
+      shell: dpkg -l | awk '/^ii/ && /linux-headers-/{print $2}' |grep -v generic |sort -r | head -n 1
       register: last_kernel_header
       changed_when: false  # Non segnare come "changed" anche se il comando è eseguito
 
