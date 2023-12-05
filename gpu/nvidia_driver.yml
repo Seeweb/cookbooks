@@ -39,8 +39,13 @@
         name: cuda-drivers
         state: present
 
+    - name: Get installed linux-headers packages
+      command: "dpkg-query -f='${binary:Package}\n' -W 'linux-headers*' | grep '^linux-headers' | sort -V"
+      register: headers_packages
+      changed_when: false
+
     - name: Install linux-headers for all kernels
       apt:
         name: "{{ item }}"
         state: present
-      loop: "{{ ansible_pkg_mgr == 'apt' | ternary(query('dpkg-query -f=\'${binary:Package}\n\' -W \"linux-headers*\" | grep '^linux-headers' | sort -V', wantlist=True), []) }}"
+      loop: "{{ headers_packages.stdout_lines }}"
