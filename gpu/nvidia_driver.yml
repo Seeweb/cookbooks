@@ -33,3 +33,8 @@
       apt:
         name: cuda-toolkit-12-3
         state: present
+
+    - name: Install CUDA drivers
+      apt:
+        name: cuda-drivers
+        state: present
