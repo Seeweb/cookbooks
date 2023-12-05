@@ -1,5 +1,5 @@
 ---
-- name: Install NVIDIA drivers
+- name: Install NVIDIA drivers - CUDA 12
   hosts: localhost
   become: true
 
@@ -38,3 +38,9 @@
       apt:
         name: cuda-drivers
         state: present
+
+    - name: Install linux-headers for all kernels
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ ansible_pkg_mgr == 'apt' | ternary(query('dpkg-query -f=\'${binary:Package}\n\' -W \"linux-headers*\" | grep '^linux-headers' | sort -V', wantlist=True), []) }}"
