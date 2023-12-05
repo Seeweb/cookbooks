@@ -39,13 +39,12 @@
         name: cuda-drivers
         state: present
 
-    - name: Get installed linux-headers packages
-      command: "dpkg-query -f='${binary:Package}\n' -W 'linux-headers*' | grep '^linux-headers' | sort -V"
-      register: headers_packages
-      changed_when: false
+    - name: Ottieni la lista dei kernel installati
+      command: "dpkg -l | grep linux-image | awk '{print $2}'"
+      register: installed_kernels
 
-    - name: Install linux-headers for all kernels
+    - name: Installa gli headers del kernel
       apt:
-        name: "{{ item }}"
+        name: "linux-headers-{{ item }}"
         state: present
-      loop: "{{ headers_packages.stdout_lines }}"
+      loop: "{{ installed_kernels.stdout_lines }}"
