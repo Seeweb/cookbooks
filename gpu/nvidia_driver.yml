@@ -3,9 +3,6 @@
   hosts: localhost
   become: true
 
-  vars:
-    cuda_url: "https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run"
-
   tasks:
     - name: Update apt package cache
       apt:
@@ -19,39 +16,20 @@
         - git
         - build-essential
         - libxml2
-
-    - name: Install Linux headers
-      apt:
-        name: linux-headers-{{ ansible_kernel }}
-        state: present
-
-    - name: Install the latest kernel
-      apt:
-        name: linux-image-generic
-        state: latest
-
-    - name: Install the latest headers
-      apt:
-        name: linux-headers-generic
-        state: latest
-
-    - name: Get the last installed kernel header
-      shell: dpkg -l | awk '/^ii/ && /linux-headers-/{print $2}' |grep -v generic |sort -r | head -n 1
-      register: last_kernel_header
-      changed_when: false  # Non segnare come "changed" anche se il comando è eseguito
-
-    - name: Download CUDA installer
+    - name: Download CUDA keyring
       get_url:
-        url: "{{ cuda_url }}"
-        dest: /tmp/installer.run
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb"
+        dest: "/tmp/cuda-keyring_1.1-1_all.deb"
 
-    - name: Run CUDA installer
-      command: sh /tmp/installer.run --silent --kernel-source-path=/usr/src/"{{ last_kernel_header  }}"
-      args:
-        chdir: /tmp
+    - name: Install CUDA keyring
+      apt:
+        deb: "/tmp/cuda-keyring_1.1-1_all.deb"
 
-    - name: Remove CUDA installer
-      file:
-        path: /tmp/installer.run
-        state: absent
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
 
+    - name: Install CUDA Toolkit 12.3
+      apt:
+        name: cuda-toolkit-12-3
+        state: present
