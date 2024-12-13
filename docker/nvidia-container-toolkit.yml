@@ -1,6 +1,6 @@
 ---
 - name: Install NVIDIA Container Toolkit on Ubuntu 22.04
-  hosts: all
+  hosts: localhost
   become: true
   tasks:
 
