@@ -1,47 +1,43 @@
 ---
-- name: Install NVIDIA Container Toolkit
-  hosts: localhost
-  become: yes
-
+- name: Install NVIDIA Container Toolkit on Ubuntu 22.04
+  hosts: all
+  become: true
   tasks:
+
     - name: Add NVIDIA package repository key
       apt_key:
         url: https://nvidia.github.io/libnvidia-container/gpgkey
         state: present
 
     - name: Add NVIDIA package repository
-      apt_repository:
-        repo: "deb https://nvidia.github.io/libnvidia-container/$(ARCH)/ /"
-        state: present
+      copy:
+        content: |
+          deb https://nvidia.github.io/libnvidia-container/stable/ubuntu22.04/$(ARCH) /
+        dest: /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
-    - name: Update package cache
+    - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Install NVIDIA Container Toolkit dependencies
+    - name: Install NVIDIA Container Toolkit
       apt:
         name:
           - nvidia-container-toolkit
-          - nvidia-container-runtime
         state: present
 
-    - name: Configure NVIDIA Container Runtime as default
-      copy:
-        dest: /etc/docker/daemon.json
-        content: |
-          {
-            "runtimes": {
-              "nvidia": {
-                "path": "/usr/bin/nvidia-container-runtime",
-                "runtimeArgs": []
-              }
-            }
-          }
-        owner: root
-        group: root
-        mode: 0644
+    - name: Restart container runtime (e.g., Docker)
+      shell: |
+        if systemctl is-active --quiet docker; then
+          systemctl restart docker
+        fi
+      args:
+        warn: false
 
-    - name: Restart Docker
-      service:
-        name: docker
-        state: restarted
+    - name: Verify NVIDIA Container Toolkit installation
+      command: nvidia-container-cli --version
+      register: toolkit_version
+      failed_when: toolkit_version.rc != 0
+
+    - name: Show NVIDIA Container Toolkit version
+      debug:
+        msg: "NVIDIA Container Toolkit version installed: {{ toolkit_version.stdout }}"
