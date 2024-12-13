@@ -1,6 +1,6 @@
 ---
 - name: Install NVIDIA Container Toolkit
-  hosts: localhost
+  hosts: all
   become: yes
 
   tasks:
