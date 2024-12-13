@@ -1,0 +1,47 @@
+---
+- name: Install NVIDIA Container Toolkit
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Add NVIDIA package repository key
+      apt_key:
+        url: https://nvidia.github.io/libnvidia-container/gpgkey
+        state: present
+
+    - name: Add NVIDIA package repository
+      apt_repository:
+        repo: "deb https://nvidia.github.io/libnvidia-container/$(ARCH)/ /"
+        state: present
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install NVIDIA Container Toolkit dependencies
+      apt:
+        name:
+          - nvidia-container-toolkit
+          - nvidia-container-runtime
+        state: present
+
+    - name: Configure NVIDIA Container Runtime as default
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "runtimes": {
+              "nvidia": {
+                "path": "/usr/bin/nvidia-container-runtime",
+                "runtimeArgs": []
+              }
+            }
+          }
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted
