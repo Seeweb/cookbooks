@@ -1,44 +1,18 @@
 ---
-- name: Install NVIDIA Container Toolkit
-  hosts: localhost
-  become: yes
+- name: Setup Nvidia Container Toolkit package repository and GPG key [Ubuntu]
+  ansible.builtin.shell:
+    cmd: |
+      distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+            && curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+            && curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
+                  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+                  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+    creates: /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
-  tasks:
-    - name: Install required packages for repository management
-      apt:
-        name: [ "gnupg", "ca-certificates", "curl" ]
-        state: present
-        update_cache: yes
-      # Installs the necessary tools to handle GPG keys, HTTPS repositories, and general package updates.
-
-    - name: Download the NVIDIA GPG key
-      get_url:
-        url: https://nvidia.github.io/libnvidia-container/gpgkey
-        dest: /tmp/nvidia-container-toolkit.gpg
-        mode: '0644'
-      # Fetches the GPG key from the NVIDIA repository.
-
-    - name: Convert the GPG key to a dearmored format
-      command: "gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg /tmp/nvidia-container-toolkit.gpg"
-      args:
-        creates: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-      # Converts the downloaded GPG key into a format that apt can use in a secure manner.
-      # The 'creates' parameter ensures this command runs only if the file doesn't exist.
-
-    - name: Add the NVIDIA repository for Ubuntu 22.04
-      apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/ubuntu22.04/amd64/ /"
-        state: present
-      # Adds the NVIDIA Container Toolkit repository for Ubuntu 22.04 (jammy).
-      # The 'signed-by' option ensures that this repository is trusted only if signed by the specified key.
-
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-      # Updates the local apt cache to recognize the newly added repository.
-
-    - name: Install the NVIDIA Container Toolkit
-      apt:
-        name: nvidia-container-toolkit
-        state: present
-      # Installs the NVIDIA Container Toolkit, enabling GPU support in Docker containers.
+- name: Install Nvidia Container Toolkit [Ubuntu]
+  ansible.builtin.apt:
+    name: nvidia-container-toolkit
+    state: present
+    update_cache: true
+    autoclean: true
+    autoremove: true
