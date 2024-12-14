@@ -12,9 +12,7 @@
           sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
           sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
         creates: /etc/apt/sources.list.d/nvidia-container-toolkit.list
-        shell: /bin/bash  # Ensure the correct shell is used
-        register: add_repo
-      changed_when: add_repo.rc == 0  # Ensure idempotence by checking the command's return code
+        shell: /bin/bash
 
     - name: Install Nvidia Container Toolkit [Ubuntu]
       ansible.builtin.apt:
