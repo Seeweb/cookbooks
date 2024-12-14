@@ -1,23 +1,27 @@
 ---
-- name: Add Nvidia Container Toolkit GPG key and repository [Ubuntu]
-  ansible.builtin.shell:
-    cmd: |
-      distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
-      curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && \
-      curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
-      sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-      sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-    creates: /etc/apt/sources.list.d/nvidia-container-toolkit.list
-    shell: /bin/bash  # Ensure the correct shell is used
-    register: add_repo
-  changed_when: add_repo.rc == 0  # Ensure idempotence by checking the command's return code
+- hosts: localhost
+  become: true
+  
+  tasks: 
+    - name: Add Nvidia Container Toolkit GPG key and repository [Ubuntu]
+      ansible.builtin.shell:
+        cmd: |
+          distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
+          curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && \
+          curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
+          sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+          sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        creates: /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        shell: /bin/bash  # Ensure the correct shell is used
+        register: add_repo
+      changed_when: add_repo.rc == 0  # Ensure idempotence by checking the command's return code
 
-- name: Install Nvidia Container Toolkit [Ubuntu]
-  ansible.builtin.apt:
-    name: nvidia-container-toolkit
-    state: present
-    update_cache: true
-    autoclean: true
-    autoremove: true
-    cache_valid_time: 3600  # Cache is valid for 1 hour
-  when: add_repo is succeeded
+    - name: Install Nvidia Container Toolkit [Ubuntu]
+      ansible.builtin.apt:
+        name: nvidia-container-toolkit
+        state: present
+        update_cache: true
+        autoclean: true
+        autoremove: true
+        cache_valid_time: 3600  # Cache is valid for 1 hour
+      when: add_repo is succeeded
