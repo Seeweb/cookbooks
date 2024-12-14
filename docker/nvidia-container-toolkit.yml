@@ -23,3 +23,9 @@
         autoremove: true
         cache_valid_time: 3600  # Cache is valid for 1 hour
       when: add_repo is succeeded
+
+    - name: Restart Docker service
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+        enabled: true  
