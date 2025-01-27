@@ -92,10 +92,32 @@
         state: restarted
         enabled: yes
 
-    - name: Deploy using Docker Compose
-      community.docker.docker_compose:
-        project_src: /opt/openwebui
-        files:
-          - docker-compose.yaml
-        pull: yes
+    - name: Create required Docker volumes
+      docker_volume:
+        name: "{{ item }}"
         state: present
+      loop:
+        - ollama
+        - open-webui
+
+    - name: Pull OpenWebUI image
+      docker_image:
+        name: ghcr.io/open-webui/open-webui:ollama
+        source: pull
+        force_source: yes
+
+    - name: Run OpenWebUI container
+      docker_container:
+        name: open-webui
+        image: ghcr.io/open-webui/open-webui:ollama
+        state: started
+        restart_policy: always
+        ports:
+          - "3000:8080"
+        volumes:
+          - "ollama:/root/.ollama"
+          - "open-webui:/app/backend/data"
+        device_requests:
+          - driver: nvidia
+            count: -1
+            capabilities: [gpu]
