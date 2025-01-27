@@ -1,40 +1,55 @@
 ---
-- name: Install Docker and deploy Open WebUI
-  hosts: all
+- name: Pull and deploy Open WebUI configuration for Ubuntu 24.04
+  hosts: localhost
   become: true
   tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
-
+    - name: Add architecture support
+      shell: dpkg --add-architecture amd64
+      
     - name: Install required packages
       apt:
         name:
-          - apt-transport-https
+          - git
+          - ansible
           - ca-certificates
           - curl
-          - software-properties-common
           - gnupg
         state: present
+        update_cache: yes
 
-    - name: Add Docker GPG key
+    - name: Add Docker official GPG key
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
 
-    - name: Add Docker repository
+    - name: Add Docker repository for Noble (24.04)
       apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu noble stable
         state: present
+        filename: docker
 
-    - name: Install Docker
+    - name: Create directory for configuration
+      file:
+        path: /opt/openwebui
+        state: directory
+        mode: '0755'
+
+    - name: Download configuration file
+      get_url:
+        url: https://raw.githubusercontent.com/Seeweb/cookbooks/refs/heads/main/gpu/openwebui_docker.yaml
+        dest: /opt/openwebui/docker-compose.yaml
+        mode: '0644'
+
+    - name: Install Docker and Docker Compose plugin
       apt:
         name:
           - docker-ce
           - docker-ce-cli
           - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
         state: present
+        update_cache: yes
 
     - name: Add user to docker group
       user:
@@ -42,31 +57,28 @@
         groups: docker
         append: yes
 
-    # Installazione driver NVIDIA
-    - name: Add NVIDIA GPU repository
-      apt_repository:
-        repo: ppa:graphics-drivers/ppa
-        state: present
+    - name: Install NVIDIA repository and GPG key
+      block:
+        - name: Add NVIDIA GPG key
+          apt_key:
+            url: https://nvidia.github.io/nvidia-docker/gpgkey
+            state: present
 
-    - name: Install NVIDIA drivers and CUDA toolkit
-      apt:
-        name:
-          - nvidia-driver-535
-          - nvidia-cuda-toolkit
-        state: present
-
-    - name: Install NVIDIA Container Toolkit repository
-      apt_repository:
-        repo: deb https://nvidia.github.io/libnvidia-container/stable/ubuntu22.04/$(ARCH) /
-        state: present
+        - name: Add NVIDIA repository
+          apt_repository:
+            repo: deb https://nvidia.github.io/nvidia-docker/ubuntu24.04/amd64 /
+            state: present
+            filename: nvidia-docker
 
     - name: Install NVIDIA Container Toolkit
       apt:
         name:
           - nvidia-container-toolkit
+          - nvidia-container-runtime
         state: present
+        update_cache: yes
 
-    - name: Configure Docker daemon for NVIDIA runtime
+    - name: Configure Docker daemon for NVIDIA
       copy:
         content: |
           {
@@ -80,33 +92,16 @@
           }
         dest: /etc/docker/daemon.json
 
-    - name: Restart Docker service
+    - name: Ensure Docker service is running
       service:
         name: docker
         state: restarted
+        enabled: yes
 
-    - name: Create Docker volumes
-      docker_volume:
-        name: "{{ item }}"
+    - name: Deploy using Docker Compose
+      community.docker.docker_compose:
+        project_src: /opt/openwebui
+        files:
+          - docker-compose.yaml
+        pull: yes
         state: present
-      loop:
-        - ollama
-        - open-webui
-
-    - name: Run Open WebUI container
-      docker_container:
-        name: open-webui
-        image: ghcr.io/open-webui/open-webui:ollama
-        state: started
-        restart_policy: always
-        ports:
-          - "3000:8080"
-        volumes:
-          - "ollama:/root/.ollama"
-          - "open-webui:/app/backend/data"
-        devices:
-          - "/dev/nvidia0:/dev/nvidia0"
-          - "/dev/nvidiactl:/dev/nvidiactl"
-          - "/dev/nvidia-uvm:/dev/nvidia-uvm"
-        env:
-          NVIDIA_VISIBLE_DEVICES: all
