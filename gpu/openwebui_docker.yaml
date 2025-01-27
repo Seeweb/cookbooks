@@ -1,8 +1,19 @@
 ---
-- name: Pull and deploy Open WebUI configuration for Ubuntu 22.04
+- name: Pull and deploy Open WebUI configuration for Ubuntu 24.04
   hosts: localhost
   become: true
   tasks:
+    - name: Install Python pip
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install Python Docker module
+      pip:
+        name: docker
+        state: present
+
     - name: Add architecture support
       shell: dpkg --add-architecture amd64
       
@@ -22,23 +33,11 @@
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
 
-    - name: Add Docker repository for Jammy (22.04)
+    - name: Add Docker repository for Noble (24.04)
       apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu noble stable
         state: present
         filename: docker
-
-    - name: Create directory for configuration
-      file:
-        path: /opt/openwebui
-        state: directory
-        mode: '0755'
-
-    - name: Download configuration file
-      get_url:
-        url: https://raw.githubusercontent.com/Seeweb/cookbooks/refs/heads/main/gpu/openwebui_docker.yaml
-        dest: /opt/openwebui/docker-compose.yaml
-        mode: '0644'
 
     - name: Install Docker and Docker Compose plugin
       apt:
@@ -51,6 +50,12 @@
         state: present
         update_cache: yes
 
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
     - name: Install NVIDIA repository and GPG key
       block:
         - name: Add NVIDIA GPG key
@@ -60,7 +65,7 @@
 
         - name: Add NVIDIA repository
           apt_repository:
-            repo: deb https://nvidia.github.io/nvidia-docker/ubuntu22.04/amd64 /
+            repo: deb https://nvidia.github.io/nvidia-docker/ubuntu24.04/amd64 /
             state: present
             filename: nvidia-docker
 
