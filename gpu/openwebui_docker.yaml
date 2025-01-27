@@ -51,12 +51,6 @@
         state: present
         update_cache: yes
 
-    - name: Add user to docker group
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
-
     - name: Install NVIDIA repository and GPG key
       block:
         - name: Add NVIDIA GPG key
