@@ -2,12 +2,11 @@
 - name: Install NVIDIA drivers - CUDA 12
   hosts: localhost
   become: true
-
   tasks:
     - name: Update apt package cache
       apt:
         update_cache: yes
-
+    
     - name: Install Git, build-essential, libxml2
       apt:
         name: "{{ item }}"
@@ -16,35 +15,50 @@
         - git
         - build-essential
         - libxml2
+    
     - name: Download CUDA keyring
       get_url:
         url: "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb"
         dest: "/tmp/cuda-keyring_1.1-1_all.deb"
-
+    
     - name: Install CUDA keyring
       apt:
         deb: "/tmp/cuda-keyring_1.1-1_all.deb"
-
+    
     - name: Update apt package cache
       apt:
         update_cache: yes
-
-    - name: Install CUDA Toolkit 12.3
+    
+    - name: Install CUDA Toolkit 12.8
       apt:
-        name: cuda-toolkit-12-3
+        name: cuda-toolkit-12-8
         state: present
-
+    
     - name: Install CUDA drivers
       apt:
         name: cuda-drivers
         state: present
-
+    
     - name: Ottieni la lista dei kernel installati
       shell: "dpkg -l |grep linux-image |cut -d \" \" -f 3|sed -e 's/linux-image/linux-headers/'"
       register: installed_kernels
-
+    
     - name: Installa gli headers del kernel
       apt:
         name: "{{ item }}"
         state: present
       loop: "{{ installed_kernels.stdout_lines }}"
+    
+    - name: Aggiungi parametro pci=realloc a GRUB
+      lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="pci=realloc"'
+        state: present
+    
+    - name: Aggiorna GRUB
+      shell: update-grub
+    
+    - name: Riavvia il server
+      reboot:
+        reboot_timeout: 300
